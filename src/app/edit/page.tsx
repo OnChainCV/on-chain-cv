@@ -1,12 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react';
 
-type NFT = {
-  id: string;
-  name: string;
-  image: string;
-};
-
 const MOCK_NFTS: NFT[] = [
   { id: '1', name: 'NFT Dragon', image: '/nfts/dragon.png' },
   { id: '2', name: 'Crypto Kitty', image: '/nfts/kitty.png' },
