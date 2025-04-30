@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import { Metaplex, Metadata } from '@metaplex-foundation/js';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { Nft } from '@metaplex-foundation/js';
 
 const connection = new Connection(clusterApiUrl('devnet'));
 const metaplex = Metaplex.make(connection);
@@ -12,35 +13,33 @@ const FRAMES = ['none', 'круг', 'квадрат'];
 
 export default function ProfilePage() {
   const { publicKey } = useWallet();
-  const [nfts, setNfts] = useState<NFT[]>([]);
+  const [nfts, setNfts] = useState<Nft[]>([]);
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState('');
   const [avatarId, setAvatarId] = useState<string | null>(null);
   const [frame, setFrame] = useState('none');
   const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchNFTs = async () => {
       if (!publicKey) return;
+      setLoading(true);
       try {
-        const foundNfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
+        const all = await metaplex.nfts().findAllByOwner({ owner: publicKey });
 
-        const userNFTs: NFT[] = await Promise.all(
-          foundNfts
-            .filter((nft) => 'metadataAccount' in nft)
-            .map(async (nft) => {
-              const metadata = await metaplex.nfts().load({ metadata: nft as Metadata });
-              return {
-                id: metadata.address.toBase58(),
-                name: metadata.name,
-                image: metadata.json?.image || '',
-              };
-            })
+        const fullNfts: Nft[] = await Promise.all(
+          all.map(nft => metaplex.nfts().load({ metadata: nft as Metadata}))
         );
 
-        setNfts(userNFTs);
-      } catch (error) {
-        console.error('Помилка при отриманні NFT:', error);
+        const top10 = fullNfts
+          .filter(n => n.json?.image)
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .slice(0, 10);
+
+        setNfts(top10);
+      } catch (e) {
+        console.error('Помилка під час завантаження NFT:', e);
       } finally {
         setLoading(false);
       }
@@ -61,6 +60,24 @@ export default function ProfilePage() {
       }
     }
   }, [publicKey]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      const handleWheel = (e: WheelEvent) => {
+        if (e.deltaY !== 0) {
+          container.scrollLeft += e.deltaY;
+          e.preventDefault();
+        }
+      };
+
+      container.addEventListener('wheel', handleWheel, { passive: false });
+
+      return () => {
+        container.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, []);
 
   const handleSave = () => {
     if (publicKey) {
@@ -104,21 +121,29 @@ export default function ProfilePage() {
 
       <div className="mb-6">
         <label className="block mb-2">Вибери фото профілю (NFT):</label>
-        <div className="grid grid-cols-3 gap-4">
-          {nfts.map(nft => (
+        <div
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto space-x-4 py-2 no-scrollbar"
+          onWheel={(e) => {
+            const container = e.currentTarget;
+            if (e.deltaY !== 0) {
+              container.scrollLeft += e.deltaY;
+              e.preventDefault(); 
+            }
+          }}
+        >
+          {[...nfts, ...nfts.slice(0, 5)].map((nft, index) => (
             <div
-              key={nft.id}
-              className={`cursor-pointer rounded-lg border-4 transition-all ${
-                avatarId === nft.id ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onClick={() => setAvatarId(nft.id)}
+              key={`${nft.address.toBase58()}-${index}`}
+              className={`min-w-[120px] cursor-pointer rounded-lg border-4 transition-all ${avatarId === nft.address.toBase58() ? 'border-blue-500' : 'border-transparent'
+                }`}
+              onClick={() => setAvatarId(nft.address.toBase58())}
             >
               <img
-                src={nft.image}
+                src={nft.json?.image || ''}
                 alt={nft.name}
-                className={`rounded-lg w-full h-auto object-cover ${
-                  frame !== 'none' ? `frame-${frame}` : ''
-                }`}
+                className={`rounded-lg w-full h-auto object-cover ${frame !== 'none' ? `frame-${frame}` : ''
+                  }`}
               />
               <p className="text-center mt-1 text-sm">{nft.name}</p>
             </div>
@@ -146,13 +171,12 @@ export default function ProfilePage() {
         <div className="grid grid-cols-3 gap-4">
           {nfts.map(nft => (
             <div
-              key={nft.id}
-              onClick={() => toggleNFT(nft.id)}
-              className={`cursor-pointer p-1 rounded-lg border-4 transition-all ${
-                selectedNFTs.includes(nft.id) ? 'border-green-500' : 'border-transparent'
-              }`}
+              key={nft.address.toBase58()}
+              onClick={() => toggleNFT(nft.address.toBase58())}
+              className={`cursor-pointer p-1 rounded-lg border-4 transition-all ${selectedNFTs.includes(nft.address.toBase58()) ? 'border-green-500' : 'border-transparent'
+                }`}
             >
-              <img src={nft.image} alt={nft.name} className="rounded object-cover aspect-square" style={{ height: 'auto' }} />
+              <img src={nft.json?.image} alt={nft.name} className="rounded object-cover aspect-square" style={{ height: 'auto' }} />
               <p className="text-center text-sm">{nft.name}</p>
             </div>
           ))}
