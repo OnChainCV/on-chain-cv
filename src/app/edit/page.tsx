@@ -6,6 +6,7 @@ import { Metaplex, Metadata } from '@metaplex-foundation/js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Nft } from '@metaplex-foundation/js';
 
+
 const connection = new Connection(clusterApiUrl('devnet'));
 const metaplex = Metaplex.make(connection);
 
