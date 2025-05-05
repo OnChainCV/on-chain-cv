@@ -37,7 +37,7 @@ export default function PublicProfilePage() {
 
                 setNfts(withImages);
 
-                // Завантаження локального профілю
+
                 const saved = localStorage.getItem(`profile_${wallet}`);
                 if (saved) {
                     const parsed = JSON.parse(saved);
@@ -45,7 +45,7 @@ export default function PublicProfilePage() {
                     setSelectedNFTs(parsed.selectedNFTs || withImages.map(n => n.address.toBase58()));
                     setFrame(parsed.frame || 'none');
                 } else {
-                    // Якщо даних нема — дефолт
+
                     setAvatarId(withImages[0]?.address.toBase58() || null);
                     setSelectedNFTs(withImages.map(n => n.address.toBase58()));
                     setFrame('none');
@@ -86,15 +86,44 @@ export default function PublicProfilePage() {
             )}
 
             <h2 className="text-xl font-semibold mb-4 text-center">NFT колекція</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {nfts
-                    .filter(nft => selectedNFTs.includes(nft.address.toBase58()))
-                    .map(nft => (
-                        <div key={nft.address.toBase58()} className="border rounded-lg overflow-hidden">
-                            <img src={nft.json?.image} alt={nft.name} className="object-cover w-full h-auto aspect-square" />
-                            <p className="text-center p-2 text-sm">{nft.name}</p>
+            <div className="grid grid-cols-3 gap-4">
+                {nfts.map((nft) => (
+                    <div
+                        key={nft.address.toBase58()}
+                        className="relative group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300"
+                    >
+                        <img
+                            src={nft.json?.image}
+                            alt={nft.name}
+                            className="w-full h-48 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-60 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center p-4">
+                            <div className="text-white text-sm text-left space-y-2">
+                                <h3 className="text-lg font-semibold">{nft.name}</h3>
+                                {nft.json?.symbol && (
+                                    <p className="text-xs text-gray-300">🔖 {nft.json.symbol}</p>
+                                )}
+                                {nft.json?.description && (
+                                    <p className="line-clamp-3 text-gray-200">
+                                        {nft.json.description}
+                                    </p>
+                                )}
+                                {nft.json?.attributes?.length > 0 && (
+                                    <div className="mt-2">
+                                        <p className="font-semibold text-xs text-gray-400 mb-1">Attributes:</p>
+                                        <ul className="text-xs space-y-0.5">
+                                            {nft.json.attributes.slice(0, 3).map((attr: any, index: number) => (
+                                                <li key={index}>
+                                                    {attr.trait_type}: <span className="font-semibold">{attr.value}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    ))}
+                    </div>
+                ))}
             </div>
         </div>
     );
