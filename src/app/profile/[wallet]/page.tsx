@@ -19,6 +19,7 @@ export default function PublicProfilePage() {
   const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
   const [frame, setFrame] = useState('none');
   const [loading, setLoading] = useState(true);
+  const filteredNfts = nfts.filter(nft => selectedNFTs.includes(nft.address.toBase58()));
 
   useEffect(() => {
     if (!wallet || typeof wallet !== 'string') return;
@@ -41,9 +42,11 @@ export default function PublicProfilePage() {
 
         const saved = localStorage.getItem(`profile_${wallet}`);
         if (saved) {
+          console.log(1)
           const parsed = JSON.parse(saved);
+          console.log(parsed)
           setAvatarId(parsed.avatarId || withImages[0]?.address.toBase58() || null);
-          setSelectedNFTs(parsed.selectedNFTs || withImages.map(n => n.address.toBase58()));
+          setSelectedNFTs(parsed.selectedNFTs ); //|| withImages.map(n => n.address.toBase58())
           setFrame(parsed.frame || 'none');
         } else {
           setAvatarId(withImages[0]?.address.toBase58() || null);
@@ -69,7 +72,7 @@ export default function PublicProfilePage() {
   return (
     <div className="max-w-5xl mx-auto p-6 flex">
       <div className="w-1/3 pr-8 max-h-[500px] overflow-y-auto">        
-        <h2 className="text-xl font-semibold mb-4 text-left">Обрані NFT</h2>
+        <h2 className="text-xl font-semibold mb-4 text-left">Timeline get NFT</h2>
         <DevelopmentLine nfts={nfts} selectedNFTs={selectedNFTs} />
       </div>
       <div className="w-2/3">
@@ -92,7 +95,7 @@ export default function PublicProfilePage() {
 
         <h2 className="text-xl font-semibold mb-4 text-center">NFT колекція</h2>
         <div className="grid grid-cols-3 gap-4">
-          {nfts.map((nft) => (
+          {filteredNfts.map((nft) => (
             <div
               key={nft.address.toBase58()}
               className="relative group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300"
