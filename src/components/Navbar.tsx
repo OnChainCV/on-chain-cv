@@ -1,37 +1,39 @@
-"use client";
+'use client';
+import Link from 'next/link';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useMemo } from 'react';
 
-import Link from "next/link";
-import WalletButton from "@/components/Solana/WalletButton";
-import { useWallet } from "@solana/wallet-adapter-react";
+const Navbar = () => {
+  const { publicKey } = useWallet();
 
-export default function Navbar() {
-    const { connected } = useWallet();
+  const walletAddress = useMemo(() => {
+    return publicKey ? publicKey.toBase58() : null;
+  }, [publicKey]);
 
-    return (
-        <nav className="flex items-center justify-between px-6 py-4 bg-black text-white shadow-md">
+  return (
+    <nav className="fixed w-full top-0 px-6 py-4 bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white flex justify-between items-center shadow-md z-20">
+      <div className="flex space-x-6 items-center">
+        <Link href="/" className="hover:text-blue-400 transition-colors duration-200">
+          Головна
+        </Link>
+        <Link href="/edit" className="hover:text-blue-400 transition-colors duration-200">
+          Редагувати
+        </Link>
+        {walletAddress && (
+          <Link
+            href={`/profile/${walletAddress}`}
+            className="hover:text-blue-400 transition-colors duration-200"
+          >
+            Профіль
+          </Link>
+        )}
+      </div>
+      <div>
+        <WalletMultiButton className="!bg-blue-600 hover:!bg-blue-700 !text-white" />
+      </div>
+    </nav>
+  );
+};
 
-            <div className="flex items-center gap-2">
-                <Link href="/" className="text-2xl font-bold">
-                    Web3-resume
-                </Link>
-            </div>
-
-
-            <div className="flex items-center gap-6">             
-
-                {connected && (
-                    <>
-                        <Link href="/edit" className="hover:text-gray-400 transition">
-                        Edit profile
-                        </Link>
-                        <Link href="/my-vibes" className="hover:text-gray-400 transition">
-                            My profile
-                        </Link>
-                    </>
-                )}
-                <WalletButton />
-
-            </div>
-        </nav>
-    );
-}
+export default Navbar;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SolanaProvider } from '@/components/Solana/SolanaProvider';
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
       <SolanaProvider>
+        <Navbar/>
         {children}
         </SolanaProvider>
       </body>
