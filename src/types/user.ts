@@ -1,8 +1,3 @@
-type NFT = {
-    id: string;
-    name: string;
-    image: string;
-};
 
 type Profile = {
     nickname: string;

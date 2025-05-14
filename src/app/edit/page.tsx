@@ -1,43 +1,111 @@
-"use client"
-import { useEffect, useState } from 'react';
+'use client';
 
-const MOCK_NFTS: NFT[] = [
-  { id: '1', name: 'NFT Dragon', image: '/nfts/dragon.png' },
-  { id: '2', name: 'Crypto Kitty', image: '/nfts/kitty.png' },
-  { id: '3', name: 'Pixel Ape', image: '/nfts/ape.png' },
-];
+import { useEffect, useState, useRef } from 'react';
+import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Metaplex, Metadata } from '@metaplex-foundation/js';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Nft } from '@metaplex-foundation/js';
 
-const FRAMES = ['none', 'gold', 'silver', 'rainbow'];
 
-const WALLET_ADDRESS = '7H9Abc123xyz'; 
+const connection = new Connection(clusterApiUrl('devnet'));
+const metaplex = Metaplex.make(connection);
 
-export default function EditProfile() {
+const FRAMES = ['none', 'круг', 'квадрат'];
+
+function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+export default function ProfilePage() {
+  const { publicKey } = useWallet();
+  const [nfts, setNfts] = useState<Nft[]>([]);
+  const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState('');
   const [avatarId, setAvatarId] = useState<string | null>(null);
-  const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
   const [frame, setFrame] = useState('none');
+  const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [viewCount, setViewCount] = useState<number>(0);
+  const [allNfts, setAllNfts] = useState<Nft[]>([]);
+  const [avatarChoices, setAvatarChoices] = useState<Nft[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem(`profile_${WALLET_ADDRESS}`);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setNickname(parsed.nickname || '');
-      setAvatarId(parsed.avatarId || null);
-      setSelectedNFTs(parsed.selectedNFTs || []);
-      setFrame(parsed.frame || 'none');
+    const fetchNFTs = async () => {
+      const cookieKey = `view_count_${publicKey}`;
+      const current = parseInt(getCookie(cookieKey) || '0');
+      setViewCount(current);
+      if (!publicKey) return;
+      setLoading(true);
+      try {
+        const all = await metaplex.nfts().findAllByOwner({ owner: publicKey });
+
+        const fullNfts = await Promise.all(
+          all
+            .filter((nft) => nft.model === 'metadata')
+            .map(async (nft) => await metaplex.nfts().load({ metadata: nft }))
+        );
+
+        const withImages = fullNfts.filter(n => n.json?.image);
+        const top10 = withImages.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 5);
+
+        setAllNfts(withImages);
+        setAvatarChoices(top10);
+      } catch (e) {
+        console.error('Помилка під час завантаження NFT:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNFTs();
+  }, [publicKey]);
+
+  useEffect(() => {
+    if (publicKey) {
+      const saved = localStorage.getItem(`profile_${publicKey.toBase58()}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setNickname(parsed.nickname || '');
+        setAvatarId(parsed.avatarId || null);
+        setSelectedNFTs(parsed.selectedNFTs || []);
+        setFrame(parsed.frame || 'none');
+      }
+    }
+  }, [publicKey]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      const handleWheel = (e: WheelEvent) => {
+        if (e.deltaY !== 0) {
+          container.scrollLeft += e.deltaY;
+          e.preventDefault();
+        }
+      };
+
+      container.addEventListener('wheel', handleWheel, { passive: false });
+
+      return () => {
+        container.removeEventListener('wheel', handleWheel);
+      };
     }
   }, []);
 
   const handleSave = () => {
-    const data = {
-      nickname,
-      avatarId,
-      selectedNFTs,
-      frame,
-      wallet: WALLET_ADDRESS,
-    };
-    localStorage.setItem(`profile_${WALLET_ADDRESS}`, JSON.stringify(data));
-    alert('Профіль збережено!');
+    if (publicKey) {
+      const data = {
+        nickname,
+        avatarId,
+        selectedNFTs,
+        frame,
+        wallet: publicKey.toBase58(),
+      };
+      localStorage.setItem(`profile_${publicKey.toBase58()}`, JSON.stringify(data));
+      alert('Профіль збережено!');
+    } else {
+      alert('Гаманець не підключено. Неможливо зберегти профіль.');
+    }
   };
 
   const toggleNFT = (id: string) => {
@@ -45,6 +113,10 @@ export default function EditProfile() {
       prev.includes(id) ? prev.filter(n => n !== id) : [...prev, id]
     );
   };
+
+  if (loading) {
+    return <div className="text-center mt-20 text-gray-500">Завантаження NFT...</div>;
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -62,21 +134,29 @@ export default function EditProfile() {
 
       <div className="mb-6">
         <label className="block mb-2">Вибери фото профілю (NFT):</label>
-        <div className="grid grid-cols-3 gap-4">
-          {MOCK_NFTS.map(nft => (
+        <div
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto space-x-4 py-2 no-scrollbar"
+          onWheel={(e) => {
+            const container = e.currentTarget;
+            if (e.deltaY !== 0) {
+              container.scrollLeft += e.deltaY;
+              e.preventDefault();
+            }
+          }}
+        >
+          {avatarChoices.map((nft, index) => (
             <div
-              key={nft.id}
-              className={`cursor-pointer rounded-lg border-4 transition-all ${
-                avatarId === nft.id ? 'border-blue-500' : 'border-transparent'
-              }`}
-              onClick={() => setAvatarId(nft.id)}
+              key={`${nft.address.toBase58()}-${index}`}
+              className={`min-w-[120px] cursor-pointer rounded-lg border-4 transition-all ${avatarId === nft.address.toBase58() ? 'border-blue-500' : 'border-transparent'
+                }`}
+              onClick={() => setAvatarId(nft.address.toBase58())}
             >
               <img
-                src={nft.image}
+                src={nft.json?.image || ''}
                 alt={nft.name}
-                className={`rounded-lg w-full h-auto ${
-                  frame !== 'none' ? `frame-${frame}` : ''
-                }`}
+                className={`rounded-lg w-full h-auto object-cover ${frame !== 'none' ? `frame-${frame}` : ''
+                  }`}
               />
               <p className="text-center mt-1 text-sm">{nft.name}</p>
             </div>
@@ -102,19 +182,23 @@ export default function EditProfile() {
       <div className="mb-6">
         <label className="block mb-2">NFT для показу іншим:</label>
         <div className="grid grid-cols-3 gap-4">
-          {MOCK_NFTS.map(nft => (
+          {allNfts.map(nft => (
             <div
-              key={nft.id}
-              onClick={() => toggleNFT(nft.id)}
-              className={`cursor-pointer p-1 rounded-lg border-4 transition-all ${
-                selectedNFTs.includes(nft.id) ? 'border-green-500' : 'border-transparent'
-              }`}
+              key={nft.address.toBase58()}
+              onClick={() => toggleNFT(nft.address.toBase58())}
+              className={`cursor-pointer p-1 rounded-lg border-4 transition-all ${selectedNFTs.includes(nft.address.toBase58()) ? 'border-green-500' : 'border-transparent'
+                }`}
             >
-              <img src={nft.image} alt={nft.name} className="rounded" />
+              <img src={nft.json?.image} alt={nft.name} className="rounded object-cover aspect-square" style={{ height: 'auto' }} />
               <p className="text-center text-sm">{nft.name}</p>
             </div>
           ))}
         </div>
+      </div>
+
+
+      <div className="text-center text-sm text-gray-500 mb-4">
+        Переглядів профілю: <span className="font-semibold text-white">{viewCount}</span>
       </div>
 
       <button
@@ -123,6 +207,7 @@ export default function EditProfile() {
       >
         Зберегти профіль
       </button>
+
     </div>
   );
 }

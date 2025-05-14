@@ -5,6 +5,16 @@
   --foreground: #171717;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE і Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -23,4 +33,28 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s cubic-bezier(0.215, 0.610, 0.355, 1) forwards;
+}
+
+@keyframes whirlwind-in {
+  from {
+    opacity: 0;
+    transform: translateX(50px) translateY(20px) rotate(360deg) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+}
+
+.animate-whirlwind-in {
+  animation: whirlwind-in 0.8s cubic-bezier(0.215, 0.610, 0.355, 1) forwards;
 }
