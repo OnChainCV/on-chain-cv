@@ -10,6 +10,16 @@ import DevelopmentLine from '@/components/Profile/DevelopmentLine.tsx';
 const connection = new Connection(clusterApiUrl('devnet'));
 const metaplex = Metaplex.make(connection);
 
+function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
+function setCookie(name: string, value: string, days = 365) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+}
+
 export default function PublicProfilePage() {
   const params = useParams();
   const wallet = params?.wallet as string | undefined;
@@ -19,10 +29,17 @@ export default function PublicProfilePage() {
   const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
   const [frame, setFrame] = useState('none');
   const [loading, setLoading] = useState(true);
+  const [viewCount, setViewCount] = useState<number>(0);
   const filteredNfts = nfts.filter(nft => selectedNFTs.includes(nft.address.toBase58()));
 
   useEffect(() => {
     if (!wallet || typeof wallet !== 'string') return;
+
+    const cookieKey = `view_count_${wallet}`;
+    const current = parseInt(getCookie(cookieKey) || '0');
+    const updated = current + 1;
+    setCookie(cookieKey, String(updated));
+    setViewCount(updated);
 
     const fetchNFTs = async () => {
       setLoading(true);

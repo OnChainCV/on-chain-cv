@@ -12,6 +12,11 @@ const metaplex = Metaplex.make(connection);
 
 const FRAMES = ['none', 'круг', 'квадрат'];
 
+function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
 export default function ProfilePage() {
   const { publicKey } = useWallet();
   const [nfts, setNfts] = useState<Nft[]>([]);
@@ -21,26 +26,29 @@ export default function ProfilePage() {
   const [frame, setFrame] = useState('none');
   const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
+  const [viewCount, setViewCount] = useState<number>(0);
   const [allNfts, setAllNfts] = useState<Nft[]>([]);
   const [avatarChoices, setAvatarChoices] = useState<Nft[]>([]);
 
   useEffect(() => {
     const fetchNFTs = async () => {
+      const cookieKey = `view_count_${publicKey}`;
+      const current = parseInt(getCookie(cookieKey) || '0');
+      setViewCount(current);
       if (!publicKey) return;
       setLoading(true);
       try {
         const all = await metaplex.nfts().findAllByOwner({ owner: publicKey });
-  
+
         const fullNfts = await Promise.all(
           all
             .filter((nft) => nft.model === 'metadata')
             .map(async (nft) => await metaplex.nfts().load({ metadata: nft }))
         );
-  
+
         const withImages = fullNfts.filter(n => n.json?.image);
         const top10 = withImages.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 5);
-  
+
         setAllNfts(withImages);
         setAvatarChoices(top10);
       } catch (e) {
@@ -49,10 +57,10 @@ export default function ProfilePage() {
         setLoading(false);
       }
     };
-  
+
     fetchNFTs();
   }, [publicKey]);
-  
+
   useEffect(() => {
     if (publicKey) {
       const saved = localStorage.getItem(`profile_${publicKey.toBase58()}`);
@@ -188,12 +196,18 @@ export default function ProfilePage() {
         </div>
       </div>
 
+
+      <div className="text-center text-sm text-gray-500 mb-4">
+        Переглядів профілю: <span className="font-semibold text-white">{viewCount}</span>
+      </div>
+
       <button
         onClick={handleSave}
         className="bg-indigo-600 text-white px-6 py-3 rounded hover:bg-indigo-700 w-full"
       >
         Зберегти профіль
       </button>
+
     </div>
   );
 }
