@@ -62,17 +62,58 @@ export default function ProfilePage() {
   }, [publicKey]);
 
   useEffect(() => {
-    if (publicKey) {
-      const saved = localStorage.getItem(`profile_${publicKey.toBase58()}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setNickname(parsed.nickname || '');
-        setAvatarId(parsed.avatarId || null);
-        setSelectedNFTs(parsed.selectedNFTs || []);
-        setFrame(parsed.frame || 'none');
+    const fetchProfile = async () => {
+      if (!publicKey) return;
+
+      try {
+        const res = await fetch(`/api/profile?wallet=${publicKey.toBase58()}`);
+        if (!res.ok) throw new Error('Profile not found');
+        const data = await res.json();
+
+        setNickname(data.nickname || '');
+        setAvatarId(data.avatarId || null);
+        setSelectedNFTs(data.selectedNFTs || []);
+        setFrame(data.frame || 'none');
+      } catch (error) {
+        console.log('No saved profile or error:', error);
       }
-    }
+    };
+
+    fetchProfile();
   }, [publicKey]);
+
+  const handleSave = async () => {
+    if (!publicKey) {
+      alert('Гаманець не підключено. Неможливо зберегти профіль.');
+      return;
+    }
+
+    const data = {
+      wallet: publicKey.toBase58(),
+      nickname,
+      avatarId,
+      selectedNFTs,
+      frame,
+    };
+
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        alert('Профіль збережено!');
+      } else {
+        alert('Помилка збереження профілю');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Помилка при збереженні');
+    }
+  };
+
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -90,23 +131,7 @@ export default function ProfilePage() {
         container.removeEventListener('wheel', handleWheel);
       };
     }
-  }, []);
-
-  const handleSave = () => {
-    if (publicKey) {
-      const data = {
-        nickname,
-        avatarId,
-        selectedNFTs,
-        frame,
-        wallet: publicKey.toBase58(),
-      };
-      localStorage.setItem(`profile_${publicKey.toBase58()}`, JSON.stringify(data));
-      alert('Профіль збережено!');
-    } else {
-      alert('Гаманець не підключено. Неможливо зберегти профіль.');
-    }
-  };
+  }, []);  
 
   const toggleNFT = (id: string) => {
     setSelectedNFTs(prev =>
