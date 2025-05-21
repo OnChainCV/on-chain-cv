@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import { Metaplex, Nft } from '@metaplex-foundation/js';
-import DevelopmentLine from '@/components/Profile/DevelopmentLine.tsx'; 
+import DevelopmentLine from '@/components/Profile/DevelopmentLine.tsx';
 
 const connection = new Connection(clusterApiUrl('devnet'));
 const metaplex = Metaplex.make(connection);
@@ -57,18 +57,22 @@ export default function PublicProfilePage() {
 
         setNfts(withImages);
 
-        const saved = localStorage.getItem(`profile_${wallet}`);
-        if (saved) {
-          console.log(1)
-          const parsed = JSON.parse(saved);
-          console.log(parsed)
-          setAvatarId(parsed.avatarId || withImages[0]?.address.toBase58() || null);
-          setSelectedNFTs(parsed.selectedNFTs ); //|| withImages.map(n => n.address.toBase58())
-          setFrame(parsed.frame || 'none');
-        } else {
-          setAvatarId(withImages[0]?.address.toBase58() || null);
-          setSelectedNFTs(withImages.map(n => n.address.toBase58()));
-          setFrame('none');
+        try {
+          const res = await fetch(`/api/profile?wallet=${publicKey.toBase58()}`);
+          if (!res.ok) throw new Error('Profile not found');
+          const data = await res.json();
+          if (data) {
+            console.log(data)            
+            setAvatarId(data.avatarId || withImages[0]?.address.toBase58() || null);
+            setSelectedNFTs(data.selectedNFTs); 
+            setFrame(data.frame || 'none');
+          } else {
+            setAvatarId(withImages[0]?.address.toBase58() || null);
+            setSelectedNFTs(withImages.map(n => n.address.toBase58()));
+            setFrame('none');
+          }
+        } catch (error) {
+          console.log('No saved profile or error:', error);
         }
       } catch (e) {
         console.error('Помилка при завантаженні профілю:', e);
@@ -88,7 +92,7 @@ export default function PublicProfilePage() {
 
   return (
     <div className="max-w-5xl mx-auto p-6 flex">
-      <div className="w-1/3 pr-8 max-h-[500px] overflow-y-auto">        
+      <div className="w-1/3 pr-8 max-h-[500px] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4 text-left">Timeline get NFT</h2>
         <DevelopmentLine nfts={nfts} selectedNFTs={selectedNFTs} />
       </div>
