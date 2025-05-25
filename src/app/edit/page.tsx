@@ -46,7 +46,7 @@ export default function ProfilePage() {
             .map(async (nft) => await metaplex.nfts().load({ metadata: nft }))
         );
 
-        const withImages = fullNfts.filter(n => n.json?.image);
+        const withImages = fullNfts.filter((n): n is Nft => n.model === 'nft' && !!n.json?.image);
         const top10 = withImages.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 5);
 
         setAllNfts(withImages);
@@ -144,21 +144,21 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">Редагування профілю</h1>
+    <div className="max-w-2xl mx-auto p-4 sm:p-6">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Редагування профілю</h1>
 
       <div className="mb-4">
-        <label className="block mb-2">Нікнейм:</label>
+        <label className="block mb-2 text-sm sm:text-base">Нікнейм:</label>
         <input
           type="text"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded text-sm sm:text-base"
           value={nickname}
           onChange={e => setNickname(e.target.value)}
         />
       </div>
 
       <div className="mb-6">
-        <label className="block mb-2">Вибери фото профілю (NFT):</label>
+        <label className="block mb-2 text-sm sm:text-base">Вибери фото профілю (NFT):</label>
         <div
           ref={scrollContainerRef}
           className="flex overflow-x-auto space-x-4 py-2 no-scrollbar"
@@ -173,7 +173,7 @@ export default function ProfilePage() {
           {avatarChoices.map((nft, index) => (
             <div
               key={`${nft.address.toBase58()}-${index}`}
-              className={`min-w-[120px] cursor-pointer rounded-lg border-4 transition-all ${avatarId === nft.address.toBase58() ? 'border-blue-500' : 'border-transparent'
+              className={`min-w-[100px] sm:min-w-[120px] cursor-pointer rounded-lg border-4 transition-all ${avatarId === nft.address.toBase58() ? 'border-blue-500' : 'border-transparent'
                 }`}
               onClick={() => setAvatarId(nft.address.toBase58())}
             >
@@ -183,16 +183,16 @@ export default function ProfilePage() {
                 className={`rounded-lg w-full h-auto object-cover ${frame !== 'none' ? `frame-${frame}` : ''
                   }`}
               />
-              <p className="text-center mt-1 text-sm">{nft.name}</p>
+              <p className="text-center mt-1 text-xs sm:text-sm truncate px-1">{nft.name}</p>
             </div>
           ))}
         </div>
       </div>
 
       <div className="mb-4">
-        <label className="block mb-2">Рамка для аватара:</label>
+        <label className="block mb-2 text-sm sm:text-base">Рамка для аватара:</label>
         <select
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded text-sm sm:text-base"
           value={frame}
           onChange={e => setFrame(e.target.value)}
         >
@@ -205,8 +205,8 @@ export default function ProfilePage() {
       </div>
 
       <div className="mb-6">
-        <label className="block mb-2">NFT для показу іншим:</label>
-        <div className="grid grid-cols-3 gap-4">
+        <label className="block mb-2 text-sm sm:text-base">NFT для показу іншим:</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {allNfts.map(nft => (
             <div
               key={nft.address.toBase58()}
@@ -215,24 +215,22 @@ export default function ProfilePage() {
                 }`}
             >
               <img src={nft.json?.image} alt={nft.name} className="rounded object-cover aspect-square" style={{ height: 'auto' }} />
-              <p className="text-center text-sm">{nft.name}</p>
+              <p className="text-center text-xs sm:text-sm truncate px-1">{nft.name}</p>
             </div>
           ))}
         </div>
       </div>
 
-
-      <div className="text-center text-sm text-gray-500 mb-4">
+      <div className="text-center text-xs sm:text-sm text-gray-500 mb-4">
         Переглядів профілю: <span className="font-semibold text-white">{viewCount}</span>
       </div>
 
       <button
         onClick={handleSave}
-        className="bg-indigo-600 text-white px-6 py-3 rounded hover:bg-indigo-700 w-full"
+        className="bg-indigo-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded hover:bg-indigo-700 w-full text-sm sm:text-base"
       >
         Зберегти профіль
       </button>
-
     </div>
   );
 }

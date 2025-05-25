@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
-    console.log(profile)
+    
     return NextResponse.json(profile, { status: 200 })
 
   } catch (error) {
