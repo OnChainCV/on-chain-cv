@@ -5,6 +5,7 @@ import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import { Metaplex, Metadata } from '@metaplex-foundation/js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Nft } from '@metaplex-foundation/js';
+import RewardForm from '@/components/RewardForm/RewardForm';
 
 
 const connection = new Connection(clusterApiUrl('devnet'));
@@ -146,7 +147,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6">
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Редагування профілю</h1>
-
+      <RewardForm viewCount={viewCount} />
       <div className="mb-4">
         <label className="block mb-2 text-sm sm:text-base">Нікнейм:</label>
         <input

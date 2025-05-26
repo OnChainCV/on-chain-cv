@@ -42,6 +42,7 @@ This is not just a profile — it's your digital Web3 resume that:
 - **Solana Web3.js** — network interaction
 - **Metaplex JS SDK** — NFT loading
 - **Wallet Adapter** — support for Phantom and other wallets
+- **localStorage** — profile saving
 
 ## How does it work?
 
