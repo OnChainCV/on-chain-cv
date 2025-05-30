@@ -28,8 +28,30 @@ export default function ProfilePage() {
   const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [viewCount, setViewCount] = useState<number>(0);
+  const [recentViews, setRecentViews] = useState<number>(0);
+  const [currentReward, setCurrentReward] = useState<number>(0);
   const [allNfts, setAllNfts] = useState<Nft[]>([]);
   const [avatarChoices, setAvatarChoices] = useState<Nft[]>([]);
+
+  useEffect(() => {
+    const fetchViewStats = async () => {
+      if (!publicKey) return;
+      
+      try {
+        const res = await fetch(`/api/profile/views?wallet=${publicKey.toBase58()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setViewCount(data.totalViews || 0);
+          setRecentViews(data.recentViews || 0);
+          setCurrentReward(data.currentReward || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching view stats:', error);
+      }
+    };
+
+    fetchViewStats();
+  }, [publicKey]);
 
   useEffect(() => {
     const fetchNFTs = async () => {
@@ -223,7 +245,13 @@ export default function ProfilePage() {
       </div>
 
       <div className="text-center text-xs sm:text-sm text-gray-500 mb-4">
-        Переглядів профілю: <span className="font-semibold text-white">{viewCount}</span>
+        <p>
+          Всього переглядів: <span className="font-semibold text-white">{viewCount}</span>
+          <span className="mx-2">|</span>
+          За 24 години: <span className="font-semibold text-white">{recentViews}</span>
+          <span className="mx-2">|</span>
+          Нагорода: <span className="font-semibold text-white">{currentReward} токенів</span>
+        </p>
       </div>
 
       <button

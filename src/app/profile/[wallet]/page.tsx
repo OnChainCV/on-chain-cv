@@ -28,16 +28,35 @@ export default function PublicProfilePage() {
   const [frame, setFrame] = useState('none');
   const [loading, setLoading] = useState(true);
   const [viewCount, setViewCount] = useState<number>(0);
+  const [recentViews, setRecentViews] = useState<number>(0);
+  const [currentReward, setCurrentReward] = useState<number>(0);
   const filteredNfts = nfts.filter(nft => selectedNFTs.includes(nft.address.toBase58()));
 
   useEffect(() => {
     if (!wallet || typeof wallet !== 'string') return;
 
-    const cookieKey = `view_count_${wallet}`;
-    const current = parseInt(getCookie(cookieKey) || '0');
-    const updated = current + 1;
-    setCookie(cookieKey, String(updated));
-    setViewCount(updated);
+    const recordView = async () => {
+      try {
+        // Get the viewer's wallet from localStorage or use a default
+        const viewerWallet = localStorage.getItem('wallet') || 'anonymous';
+        
+        // Record the view
+        const viewRes = await fetch(`/api/profile/views?wallet=${wallet}&viewerWallet=${viewerWallet}`, {
+          method: 'POST'
+        });
+        
+        if (viewRes.ok) {
+          const viewData = await viewRes.json();
+          setViewCount(viewData.totalViews || 0);
+          setRecentViews(viewData.recentViews || 0);
+          setCurrentReward(viewData.currentReward || 0);
+        }
+      } catch (error) {
+        console.error('Error recording view:', error);
+      }
+    };
+
+    recordView();
 
     const fetchNFTs = async () => {
       setLoading(true);
@@ -97,6 +116,16 @@ return (
         {/* <DevelopmentLine nfts={nfts} selectedNFTs={selectedNFTs} /> */}
       </div>
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Профіль користувача</h1>
+
+      <div className="text-center mb-4">
+        <p className="text-gray-500">
+          Переглядів: <span className="font-semibold text-white">{viewCount}</span>
+          <span className="mx-2">|</span>
+          За 24 години: <span className="font-semibold text-white">{recentViews}</span>
+          <span className="mx-2">|</span>
+          Нагорода: <span className="font-semibold text-white">{currentReward} токенів</span>
+        </p>
+      </div>
 
       {avatarNft && (
         <div className="flex flex-col items-center mb-4 sm:mb-6">
