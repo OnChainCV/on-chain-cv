@@ -72,7 +72,7 @@ export default function Home() {
   const animationStartCards = animationStartSubtitle + 1200; 
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white px-4">
+    <div className="mt-20 flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] text-white px-4">
       <div className="max-w-3xl w-full text-center">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight mb-4 sm:mb-8">
           <AnimatedText text={text1} className="leading-tight" startDelay={animationStartTitle} />
