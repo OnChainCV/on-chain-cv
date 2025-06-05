@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
     const db = await connectToDB()
     const collection = db.collection('profiles')
-
+    
     const profile = await collection.findOne({ wallet })
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   try {
     const db = await connectToDB()
     const collection = db.collection('profiles')
-
+    
     const body = await req.json()
     const { wallet, nickname, avatarId, selectedNFTs, frame } = body
 
