@@ -31,6 +31,9 @@ const Navbar = () => {
             <Link href="/edit" className="hover:text-blue-400 transition-colors duration-200">
               Редагувати
             </Link>
+            <Link href="/campaigns" className="hover:text-blue-400 transition-colors duration-200">
+              Кампанії
+            </Link>
             {walletAddress && (
               <Link
                 href={`/profile/${walletAddress}`}
