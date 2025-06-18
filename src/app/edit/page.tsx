@@ -27,6 +27,9 @@ export default function ProfilePage() {
   const [avatarId, setAvatarId] = useState<string | null>(null);
   const [frame, setFrame] = useState('none');
   const [selectedNFTs, setSelectedNFTs] = useState<string[]>([]);
+  const [companyName, setCompanyName] = useState('');
+  const [companyWallet, setCompanyWallet] = useState('');
+  const [companyPosition, setCompanyPosition] = useState('');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [viewCount, setViewCount] = useState<number>(0);
   const [recentViews, setRecentViews] = useState<number>(0);
@@ -113,6 +116,9 @@ export default function ProfilePage() {
         setAvatarId(data.avatarId || null);
         setSelectedNFTs(data.selectedNFTs || []);
         setFrame(data.frame || 'none');
+        setCompanyName(data.company?.name || '');
+        setCompanyWallet(data.company?.wallet || '');
+        setCompanyPosition(data.company?.position || '');
       } catch (error) {
         console.log('No saved profile or error:', error);
       }
@@ -133,6 +139,11 @@ export default function ProfilePage() {
       avatarId,
       selectedNFTs,
       frame,
+      company: companyName && companyWallet ? {
+        name: companyName,
+        wallet: companyWallet,
+        position: companyPosition
+      } : undefined
     };
 
     try {
@@ -185,7 +196,7 @@ export default function ProfilePage() {
   return (
     <div className="mt-20 max-w-2xl mx-auto p-4 sm:p-6">      
         <RewardForm viewCount={viewCount} />      
-      {/* <div className="mb-4">
+      <div className="mb-4">
         <label className="block mb-2 text-sm sm:text-base">Нікнейм:</label>
         <input
           type="text"
@@ -193,7 +204,43 @@ export default function ProfilePage() {
           value={nickname}
           onChange={e => setNickname(e.target.value)}
         />
-      </div> */}
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Інформація про компанію</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block mb-2 text-sm sm:text-base">Назва компанії:</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded text-sm sm:text-base"
+              value={companyName}
+              onChange={e => setCompanyName(e.target.value)}
+              placeholder="Введіть назву компанії"
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm sm:text-base">Адреса гаманця компанії:</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded text-sm sm:text-base"
+              value={companyWallet}
+              onChange={e => setCompanyWallet(e.target.value)}
+              placeholder="Введіть адресу гаманця компанії"
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm sm:text-base">Посада:</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded text-sm sm:text-base"
+              value={companyPosition}
+              onChange={e => setCompanyPosition(e.target.value)}
+              placeholder="Введіть вашу посаду"
+            />
+          </div>
+        </div>
+      </div>
 
       <div className="mb-">
         <label className="block mb-2 text-sm sm:text-base">Вибери фото профілю (NFT):</label>

@@ -6,4 +6,9 @@ type Profile = {
     wallet: string;    
     totalViews?: number;
     recentViews?: number;
+    company?: {
+        name: string;
+        wallet: string;
+        position: string;
+    };
 };
