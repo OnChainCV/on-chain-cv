@@ -21,6 +21,8 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [viewCount, setViewCount] = useState<number>(0);
   const [recentViews, setRecentViews] = useState<number>(0);
+  const [currentReward, setCurrentReward] = useState<number>(0);
+  const [company, setCompany] = useState<{ name: string; wallet: string; position: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   
@@ -81,9 +83,11 @@ export default function PublicProfilePage() {
           if (!res.ok) throw new Error('Profile not found');
           const data = await res.json();
           if (data) {
+            console.log(data)
             setAvatarId(data.avatarId || withImages[0]?.address.toBase58() || null);
             setSelectedNFTs(data.selectedNFTs);
             setFrame(data.frame || 'none');
+            setCompany(data.company || null);
           } else {
             setAvatarId(withImages[0]?.address.toBase58() || null);
             setSelectedNFTs(withImages.map(n => n.address.toBase58()));
@@ -112,6 +116,17 @@ export default function PublicProfilePage() {
     <div className="max-w-5xl mx-auto p-4 sm:p-6 flex flex-col md:flex-row justify-center items-start pt-20">
       <div className="w-full md:w-2/3">        
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Профіль користувача</h1>
+
+        {company && (
+          <div className="mb-6 p-4 bg-gray-800 rounded-lg">
+            <h2 className="text-xl font-semibold mb-2">Компанія</h2>
+            <div className="space-y-2">
+              <p><span className="text-gray-400">Назва:</span> {company.name}</p>
+              <p><span className="text-gray-400">Посада:</span> {company.position}</p>
+              <p><span className="text-gray-400">Адреса гаманця компанії:</span> {company.wallet}</p>
+            </div>
+          </div>
+        )}
 
         <div className="text-center mb-4">
           <p className="text-gray-500">
