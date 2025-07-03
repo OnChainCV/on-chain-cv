@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
-    
+    console.log(profile)
     return NextResponse.json(profile, { status: 200 })
 
   } catch (error) {
@@ -28,31 +28,40 @@ export async function GET(req: Request) {
 }
 
 
-
 export async function POST(req: Request) {
   try {
     const db = await connectToDB()
     const collection = db.collection('profiles')
     
     const body = await req.json()
-    const { wallet, nickname, avatarId, selectedNFTs, frame } = body
+    const { wallet, nickname, avatarId, selectedNFTs, frame, company } = body
 
     if (!wallet) {
       return NextResponse.json({ error: 'Missing wallet' }, { status: 400 })
     }
 
+    const updateData: any = {
+      wallet,
+      nickname,
+      avatarId,
+      selectedNFTs,
+      frame,
+      updatedAt: new Date(),
+    }
+    if (company) {
+      updateData.company = {
+        name: company.name,
+        wallet: company.wallet,
+        position: company.position
+      }
+    } else {
+      
+      updateData.$unset = { company: "" }
+    }
+
     await collection.updateOne(
       { wallet },
-      {
-        $set: {
-          wallet,
-          nickname,
-          avatarId,
-          selectedNFTs,
-          frame,
-          updatedAt: new Date(),
-        },
-      },
+      { $set: updateData },
       { upsert: true }
     )
 
